@@ -9,7 +9,7 @@ locals {
 }
 
 module "kafka" {
-  source           = "git::https://github.com/canonical/kafka-operator//terraform?ref=feat/terraform"
+  source           = "git::https://github.com/canonical/kafka-operator//terraform"
   model            = var.model
   app_name         = var.kafka.app_name
   channel          = var.kafka.channel
@@ -18,6 +18,7 @@ module "kafka" {
   base             = var.kafka.base
   units            = var.kafka.units
   controller_units = var.kafka.controller_units
+  deployment_mode  = var.kafka.deployment_mode
   config = merge(var.kafka.config, {
     profile = var.profile
   })
@@ -25,7 +26,7 @@ module "kafka" {
 
 module "connect" {
   count       = var.connect.units > 0 ? 1 : 0
-  source      = "git::https://github.com/canonical/kafka-connect-operator//terraform?ref=feat/terraform"
+  source      = "git::https://github.com/canonical/kafka-connect-operator//terraform"
   model       = var.model
   app_name    = var.connect.app_name
   channel     = var.connect.channel
@@ -38,7 +39,7 @@ module "connect" {
 
 module "karapace" {
   count       = var.karapace.units > 0 ? 1 : 0
-  source      = "git::https://github.com/canonical/karapace-operator//terraform?ref=feat/terraform"
+  source      = "git::https://github.com/canonical/karapace-operator//terraform"
   model       = var.model
   app_name    = var.karapace.app_name
   channel     = var.karapace.channel
@@ -51,7 +52,7 @@ module "karapace" {
 
 module "ui" {
   count       = var.ui.units > 0 ? 1 : 0
-  source      = "git::https://github.com/canonical/kafka-ui-operator//terraform?ref=feat/terraform"
+  source      = "git::https://github.com/canonical/kafka-ui-operator//terraform"
   model       = var.model
   app_name    = var.ui.app_name
   channel     = var.ui.channel

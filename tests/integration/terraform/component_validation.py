@@ -3,7 +3,7 @@
 # See LICENSE file for licensing details.
 
 """
-Component validation tests for the Kafka super cluster.
+Component validation tests.
 Tests specific functionality of each component.
 """
 
@@ -13,68 +13,10 @@ from uuid import uuid4
 
 import pytest
 import requests
-from jubilant import Juju
 from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
 from kafka.admin import NewTopic
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope="module")
-def juju():
-    """Jubilant Juju instance for test operations."""
-    return Juju()
-
-
-@pytest.fixture(scope="module")
-def kafka_connection_info(juju):
-    """Get Kafka connection information from data-integrator."""
-    # Get bootstrap servers from kafka application action
-    action_result = juju.run_action("kafka/leader", "get-admin-credentials")
-
-    # Parse the connection information
-    connection_info = {
-        "bootstrap_servers": action_result.get("bootstrap-server", "localhost:9092"),
-        "username": action_result.get("username"),
-        "password": action_result.get("password"),
-    }
-    return connection_info
-
-
-@pytest.fixture(scope="module")
-def karapace_endpoint(juju):
-    """Get Karapace schema registry endpoint."""
-    status = juju.status()
-    karapace_unit = status.applications["karapace"]["units"]["karapace/0"]
-    karapace_ip = karapace_unit["public-address"]
-    return f"http://{karapace_ip}:8081"
-
-
-@pytest.fixture(scope="module")
-def connect_endpoint(juju):
-    """Get Kafka Connect REST API endpoint."""
-    status = juju.status()
-    connect_unit = status.applications["kafka-connect"]["units"]["kafka-connect/0"]
-    connect_ip = connect_unit["public-address"]
-    return f"http://{connect_ip}:8083"
-
-
-@pytest.fixture(scope="module")
-def ui_endpoint(juju):
-    """Get Kafka UI endpoint."""
-    status = juju.status()
-    ui_unit = status.applications["kafka-ui"]["units"]["kafka-ui/0"]
-    ui_ip = ui_unit["public-address"]
-    return f"http://{ui_ip}:8080"
-
-
-@pytest.fixture(scope="module")
-def cruise_control_endpoint(juju):
-    """Get CruiseControl endpoint."""
-    status = juju.status()
-    kafka_unit = status.applications["kafka"]["units"]["kafka/0"]
-    kafka_ip = kafka_unit["public-address"]
-    return f"http://{kafka_ip}:9090"
 
 
 class TestKafkaValidation:

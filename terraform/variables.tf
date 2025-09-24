@@ -52,6 +52,7 @@ variable "kafka" {
     base             = optional(string, "ubuntu@24.04")
     units            = optional(number, 3)
     controller_units = optional(number, 3)
+    deployment_mode  = optional(string, "split")
   })
   default = {}
 

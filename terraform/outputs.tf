@@ -16,7 +16,7 @@ output "offers" {
 output "app_names" {
   description = "Output of all deployed application names."
   value = {
-    broker     = module.kafka.broker_app_name
+    broker     = module.kafka.app_name
     controller = module.kafka.controller_app_name,
     connect    = local.connect_app_name,
     karapace   = local.karapace_app_name,

@@ -4,12 +4,20 @@
 
 """Terraform deployment helpers for integration tests."""
 
+import json
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+import jubilant
+
+
+def all_active_idle(status: jubilant.Status, *apps: str):
+    """Helper function for jubilant all units active|idle checks."""
+    return jubilant.all_agents_idle(status, *apps) and jubilant.all_active(status, *apps)
 
 
 class TerraformDeployer:
@@ -21,29 +29,16 @@ class TerraformDeployer:
         self.tfvars_file = None
 
     def create_tfvars(self, config: Dict[str, Any]) -> str:
-        """Create a .tfvars file with the given configuration."""
+        """Create a .tfvars.json file with the given configuration."""
         self.tfvars_file = tempfile.NamedTemporaryFile(
-            mode='w', suffix='.tfvars', delete=False
+            mode='w', suffix='.tfvars.json', delete=False
         )
 
         # Always include model
-        config["model"] = f'"{self.model_name}"'
+        config["model"] = self.model_name
 
-        # Write tfvars content
-        for key, value in config.items():
-            if isinstance(value, dict):
-                # Handle complex objects
-                self.tfvars_file.write(f"{key} = {{\n")
-                for subkey, subvalue in value.items():
-                    if isinstance(subvalue, str):
-                        self.tfvars_file.write(f'  {subkey} = "{subvalue}"\n')
-                    else:
-                        self.tfvars_file.write(f'  {subkey} = {subvalue}\n')
-                self.tfvars_file.write("}\n")
-            elif isinstance(value, str) and not value.startswith('"'):
-                self.tfvars_file.write(f'{key} = "{value}"\n')
-            else:
-                self.tfvars_file.write(f'{key} = {value}\n')
+        # Write JSON content
+        json.dump(config, self.tfvars_file, indent=2)
 
         self.tfvars_file.close()
         return self.tfvars_file.name
@@ -141,6 +136,12 @@ class TerraformDeployer:
         if self.tfvars_file and Path(self.tfvars_file.name).exists():
             Path(self.tfvars_file.name).unlink()
 
+        # Clean up terraform artifacts
+        shutil.rmtree(self.terraform_dir / ".terraform", ignore_errors=True)
+        for pattern in [".terraform.lock.hcl", "terraform.tfstate*", "*.tfplan"]:
+            for file_path in self.terraform_dir.glob(pattern):
+                file_path.unlink(missing_ok=True)
+
 
 def get_single_mode_config(enable_cruise_control: bool = False) -> Dict[str, Any]:
     """Get Terraform configuration for single-mode deployment."""
@@ -148,7 +149,7 @@ def get_single_mode_config(enable_cruise_control: bool = False) -> Dict[str, Any
         "profile": "testing",
         "kafka": {
             "units": 3,
-            "controller_units": 0,  # Single mode - no separate controllers
+            "deployment_mode": "single",  # Explicitly set single mode
         },
         "connect": {"units": 1},
         "karapace": {"units": 1},
@@ -169,7 +170,8 @@ def get_multi_app_config(enable_cruise_control: bool = False) -> Dict[str, Any]:
         "profile": "testing",
         "kafka": {
             "units": 3,
-            "controller_units": 3,  # Split mode - separate controllers
+            "controller_units": 3,
+            "deployment_mode": "split",
         },
         "connect": {"units": 1},
         "karapace": {"units": 1},
@@ -178,8 +180,12 @@ def get_multi_app_config(enable_cruise_control: bool = False) -> Dict[str, Any]:
     }
 
     if enable_cruise_control:
-        # Add balancer role to broker while preserving existing roles
-        config["kafka"]["config"] = {"roles": "broker,balancer"}
+        # TODO: Split mode + cruise control limitation
+        # In split mode, the Kafka module hardcodes roles to "broker" and "controller"
+        # It doesn't preserve the "balancer" role for the broker application
+        # This needs to be fixed in the kafka-operator terraform module
+        # For now, cruise control only works properly in single mode
+        pass
 
     return config
 

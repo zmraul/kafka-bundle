@@ -5,7 +5,7 @@ resource "juju_integration" "kafka_connect" {
   model = var.model
 
   application {
-    name     = module.kafka.broker_app_name
+    name     = module.kafka.app_name
     endpoint = "kafka-client"
   }
 
@@ -19,7 +19,7 @@ resource "juju_integration" "kafka_karapace" {
   model = var.model
 
   application {
-    name     = module.kafka.broker_app_name
+    name     = module.kafka.app_name
     endpoint = "kafka-client"
   }
 
@@ -33,7 +33,7 @@ resource "juju_integration" "kafka_ui" {
   model = var.model
 
   application {
-    name     = module.kafka.broker_app_name
+    name     = module.kafka.app_name
     endpoint = "kafka-client"
   }
 
@@ -79,7 +79,7 @@ resource "juju_integration" "integrator_kafka" {
   }
 
   application {
-    name = module.kafka.broker_app_name
+    name = module.kafka.app_name
   }
 }
 
@@ -90,7 +90,7 @@ resource "juju_integration" "kafka_tls" {
   model = var.model
 
   application {
-    name     = module.kafka.broker_app_name
+    name     = module.kafka.app_name
     endpoint = "certificates"
   }
 
@@ -148,7 +148,7 @@ resource "juju_integration" "kafka_cos" {
   model = var.model
 
   application {
-    name     = module.kafka.broker_app_name
+    name     = module.kafka.app_name
     endpoint = "cos-agent"
   }
 

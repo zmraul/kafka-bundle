@@ -17,7 +17,7 @@ resource "juju_application" "integrator" {
 resource "juju_application" "kafka_cos_agent" {
   count = local.cos_enabled ? 1 : 0
   model = var.model
-  name  = "${module.kafka.broker_app_name}-cos-agent"
+  name  = "${module.kafka.app_name}-cos-agent"
 
   charm {
     name    = local.cos_agent_charm
