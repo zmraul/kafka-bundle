@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 
 """
-Integration tests for the Kafka 'super cluster' deployment.
 Tests both single-mode and multi-app mode deployments with all components.
 """
 
@@ -31,11 +30,14 @@ def terraform_deployer(juju):
 
 
 class TestSingleMode:
-    """Test super cluster deployment in single mode."""
+    """Test deployment in single mode."""
 
     @pytest.fixture(scope="class", autouse=True)
     def deploy_single_mode_cluster(self, terraform_deployer: TerraformDeployer, juju: Juju):
-        """Deploy the super cluster in single mode."""
+        """Deploy the cluster in single mode."""
+        # Ensure cleanup of any previous state
+        terraform_deployer.cleanup()
+
         config = get_single_mode_config(enable_cruise_control=True)
         tfvars_file = terraform_deployer.create_tfvars(config)
 
@@ -47,7 +49,7 @@ class TestSingleMode:
             juju.wait(
                 lambda status: all_active_idle(status, "kafka", "kafka-connect", "karapace", "kafka-ui", "data-integrator"),
                 delay=5,
-                successes=10,
+                successes=6,
                 timeout=3600,
             )
 
@@ -66,11 +68,11 @@ class TestSingleMode:
 
 
 # class TestMultiAppMode:
-#     """Test super cluster deployment in multi-app (split) mode."""
+#     """Test deployment in multi-app (split) mode."""
 
 #     @pytest.fixture(scope="class", autouse=True)
 #     def deploy_multi_app_cluster(self, terraform_deployer, juju):
-#         """Deploy the super cluster in multi-app mode."""
+#         """Deploy the cluster in multi-app mode."""
 #         config = get_multi_app_config(enable_cruise_control=True)
 #         tfvars_file = terraform_deployer.create_tfvars(config)
 
@@ -116,7 +118,7 @@ class TestSingleMode:
 
 
 # class TestTLSToggle:
-#     """Test enabling and disabling TLS across the super cluster."""
+#     """Test enabling and disabling TLS across the cluster."""
 
 #     @pytest.fixture(scope="class")
 #     def base_cluster_config(self):

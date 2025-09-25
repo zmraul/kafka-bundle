@@ -4,6 +4,7 @@
 
 """Terraform deployment helpers for integration tests."""
 
+import logging
 import json
 import shutil
 import subprocess
@@ -14,6 +15,8 @@ from typing import Any, Dict, Optional
 import yaml
 import jubilant
 
+
+logger = logging.getLogger(__name__)
 
 def all_active_idle(status: jubilant.Status, *apps: str):
     """Helper function for jubilant all units active|idle checks."""
@@ -87,6 +90,8 @@ class TerraformDeployer:
         if result.returncode != 0:
             raise RuntimeError(f"Terraform init failed: {result.stderr}")
 
+        logger.info(f"\n\nTerraform initialized:\n\n{result.stdout}")
+
     def terraform_plan(self, tfvars_file: str) -> str:
         """Run terraform plan and return the output."""
         env = self.get_controller_credentials()
@@ -99,6 +104,8 @@ class TerraformDeployer:
         )
         if result.returncode != 0:
             raise RuntimeError(f"Terraform plan failed: {result.stderr}")
+
+        logger.info(f"\n\nTerraform plan output:\n\n{result.stdout}")
         return result.stdout
 
     def terraform_apply(self, tfvars_file: str):
@@ -113,6 +120,8 @@ class TerraformDeployer:
         )
         if result.returncode != 0:
             raise RuntimeError(f"Terraform apply failed: {result.stderr}")
+
+        logger.info(f"\n\nTerraform applied:\n\n{result.stdout}")
 
     def terraform_destroy(self, tfvars_file: Optional[str] = None):
         """Destroy Terraform-managed resources."""
@@ -182,9 +191,8 @@ def get_multi_app_config(enable_cruise_control: bool = False) -> Dict[str, Any]:
     if enable_cruise_control:
         # TODO: Split mode + cruise control limitation
         # In split mode, the Kafka module hardcodes roles to "broker" and "controller"
-        # It doesn't preserve the "balancer" role for the broker application
-        # This needs to be fixed in the kafka-operator terraform module
-        # For now, cruise control only works properly in single mode
+        # It doesn't preserve the "balancer" role for the broker application, this will
+        # be updated with a config option instead of a role.
         pass
 
     return config
